@@ -1,0 +1,24 @@
+{
+  "name": "dengsn/snake",
+  "description": "Convert arrays to PHP objects with a lot of customization",
+  "authors": [
+    {
+      "name": "dengsn",
+      "email": "info@dengsn.com"
+    }
+  ],
+  "license": "GPL-3.0+",
+  "require": {
+    "php": "^7.2",
+    "symfony/property-access": "~4.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Snake\\": "src/",
+      "Snake\\Tests\\": "tests/"
+    }
+  }
+}
