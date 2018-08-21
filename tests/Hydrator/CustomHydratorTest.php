@@ -6,6 +6,7 @@ use Snake\Exception\CannotHydrateException;
 use Snake\Hydrator\CustomHydrator;
 use Snake\Tests\Objects\Person;
 use Snake\Tests\Objects\PersonWithBirthDate;
+use Snake\Tests\Objects\Table;
 
 class CustomHydratorTest extends TestCase
 {
@@ -14,6 +15,17 @@ class CustomHydratorTest extends TestCase
     $customHydrator = new CustomHydrator();
 
     $this->assertInstanceOf(CustomHydrator::class,$customHydrator);
+
+    return $customHydrator;
+  }
+
+  public function testContextConstructor()
+  {
+    $context = ['prefix' => 'wiki_'];
+    $customHydrator = new CustomHydrator($context);
+
+    $this->assertInstanceOf(CustomHydrator::class,$customHydrator);
+    $this->assertAttributeEquals(['prefix' => 'wiki_'],'context',$customHydrator,'context');
 
     return $customHydrator;
   }
@@ -42,5 +54,17 @@ class CustomHydratorTest extends TestCase
 
     $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male'];
     $object = $customHydrator->hydrate($array,Person::class);
+  }
+
+  /**
+  * @depends testContextConstructor
+  */
+  public function testContextHydrate(CustomHydrator $customHydrator)
+  {
+    $array = ['name' => 'users'];
+    $object = $customHydrator->hydrate($array,Table::class);
+
+    $this->assertInstanceOf(Table::class,$object);
+    $this->assertAttributeEquals('wiki_users','name',$object,'name');
   }
 }

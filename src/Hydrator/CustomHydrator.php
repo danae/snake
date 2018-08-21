@@ -6,6 +6,15 @@ use Snake\Exception\CannotHydrateException;
 
 class CustomHydrator implements HydratorInterface
 {
+  // variables
+  private $context;
+
+  // Constructor
+  public function __construct(array $context = [])
+  {
+    $this->context = $context;
+  }
+
   // Convert an array to an object
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
@@ -17,6 +26,6 @@ class CustomHydrator implements HydratorInterface
     $object = new $objectClass(...$objectArguments);
 
     // Hydrate the object
-    return $object->hydrate($array,$this);
+    return $object->hydrate($this,$array,$this->context);
   }
 }
