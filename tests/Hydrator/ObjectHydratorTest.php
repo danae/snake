@@ -46,6 +46,21 @@ class ObjectHydratorTest extends TestCase
   /**
   * @depends testConstructor
   */
+  public function testNotWritablePropertyWithoutError(ObjectHydrator $objectHydrator)
+  {
+    $objectHydrator->setErrorOnNotWritable(false);
+
+    $this->assertAttributeEquals(false,'errorOnNotWritable',$objectHydrator,'errorOnNotWritable');
+
+    $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male', 'city' => 'New York'];
+    $object = $objectHydrator->hydrate($array,Person::class);
+
+    $this->assertObjectNotHasAttribute('city',$object,'city');
+  }
+
+  /**
+  * @depends testConstructor
+  */
   public function testTypeConvertingCallback(ObjectHydrator $objectHydrator)
   {
     $objectHydrator->setCallbacks(['birthDate' => function($string) {

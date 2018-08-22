@@ -19,17 +19,6 @@ class CustomHydratorTest extends TestCase
     return $customHydrator;
   }
 
-  public function testContextConstructor()
-  {
-    $context = ['prefix' => 'wiki_'];
-    $customHydrator = new CustomHydrator($context);
-
-    $this->assertInstanceOf(CustomHydrator::class,$customHydrator);
-    $this->assertAttributeEquals(['prefix' => 'wiki_'],'context',$customHydrator,'context');
-
-    return $customHydrator;
-  }
-
   /**
   * @depends testConstructor
   */
@@ -57,10 +46,14 @@ class CustomHydratorTest extends TestCase
   }
 
   /**
-  * @depends testContextConstructor
+  * @depends testConstructor
   */
   public function testContextHydrate(CustomHydrator $customHydrator)
   {
+    $customHydrator->setContext(['prefix' => 'wiki_']);
+
+    $this->assertAttributeEquals(['prefix' => 'wiki_'],'context',$customHydrator,'context');
+
     $array = ['name' => 'users'];
     $object = $customHydrator->hydrate($array,Table::class);
 

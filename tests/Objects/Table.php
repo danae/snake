@@ -1,10 +1,10 @@
 <?php
 namespace Snake\Tests\Objects;
 
-use Snake\HydrateableInterface;
+use Snake\Hydrator\CustomHydrateInterface;
 use Snake\Hydrator\HydratorInterface;
 
-class Table implements HydrateableInterface
+class Table implements CustomHydrateInterface
 {
   public $name;
 

@@ -8,21 +8,28 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectHydrator implements HydratorInterface
 {
-  // TODO: Add support for custom object hydrators and extractors
-
   // Variables
   private $propertyAccessor;
+  private $errorOnNotWritable;
   private $callbacks;
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
   {
     $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
+    $this->errorOnNotWritable = true;
     $this->callbacks = [];
   }
 
+  // Set if an error is thrown if a property is not writable
+  public function setErrorOnNotWritable(bool $errorOnNotWritable): self
+  {
+    $this->errorOnNotWritable = $errorOnNotWritable;
+    return $this;
+  }
+
   // Set the callbacks
-  public function setCallbacks($callbacks): self
+  public function setCallbacks(array $callbacks): self
   {
     $this->callbacks = $callbacks;
     return $this;
@@ -59,7 +66,12 @@ class ObjectHydrator implements HydratorInterface
         if ($this->propertyAccessor->isWritable($object,$k))
           $this->propertyAccessor->setValue($object,$k,$v);
         else
-          throw new PropertyNotWritableException(get_class($object),$k);
+        {
+          if ($this->errorOnNotWritable)
+            throw new PropertyNotWritableException(get_class($object),$k);
+          else
+            continue;
+        }
       }
     }
 

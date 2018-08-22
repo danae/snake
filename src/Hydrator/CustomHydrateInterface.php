@@ -1,9 +1,7 @@
 <?php
-namespace Snake;
+namespace Snake\Hydrator;
 
-use Snake\Hydrator\HydratorInterface;
-
-interface HydrateableInterface
+interface CustomHydrateInterface
 {
   // Convert an array to an object of this type
   public function hydrate(HydratorInterface $hydrator, array $array, array $context): object;

@@ -3,24 +3,24 @@ namespace Snake\Tests\Hydrator;
 
 use PHPUnit\Framework\TestCase;
 use Snake\Exception\CannotHydrateException;
+use Snake\Hydrator\ChainHydrator;
 use Snake\Hydrator\CustomHydrator;
-use Snake\Hydrator\Hydrator;
 use Snake\Hydrator\ObjectHydrator;
 use Snake\Tests\Objects\Person;
 use Snake\Tests\Objects\PersonWithBirthDate;
 
-class HydratorTest extends TestCase
+class ChainHydratorTest extends TestCase
 {
   public function testConstructor()
   {
     $customHydrator = new CustomHydrator();
     $objectHydrator = new ObjectHydrator();
-    $hydrator = new Hydrator([$customHydrator,$objectHydrator]);
+    $chainHydrator = new ChainHydrator([$customHydrator,$objectHydrator]);
 
-    $this->assertInstanceOf(Hydrator::class,$hydrator);
-    $this->assertAttributeEquals([$customHydrator,$objectHydrator],'hydrators',$hydrator,'hydrators');
+    $this->assertInstanceOf(ChainHydrator::class,$chainHydrator);
+    $this->assertAttributeEquals([$customHydrator,$objectHydrator],'hydrators',$chainHydrator,'hydrators');
 
-    return $hydrator;
+    return $chainHydrator;
   }
 
   public function testInvalidArgumentsConstructor()
@@ -29,16 +29,16 @@ class HydratorTest extends TestCase
 
     $customHydrator = new CustomHydrator();
     $stdClass = new \stdClass();
-    $hydrator = new Hydrator([$customHydrator,$stdClass]);
+    $chainHydrator = new ChainHydrator([$customHydrator,$stdClass]);
   }
 
   /**
   * @depends testConstructor
   */
-  public function testHydrateCustom(Hydrator $hydrator)
+  public function testHydrateCustom(ChainHydrator $chainHydrator)
   {
     $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male', 'birthDate' => '1970-01-01'];
-    $object = $hydrator->hydrate($array,PersonWithBirthDate::class);
+    $object = $chainHydrator->hydrate($array,PersonWithBirthDate::class);
 
     $this->assertInstanceOf(Person::class,$object);
     $this->assertAttributeEquals('John','firstName',$object,'firstName');
@@ -50,10 +50,10 @@ class HydratorTest extends TestCase
   /**
   * @depends testConstructor
   */
-  public function testHydrateObject(Hydrator $hydrator)
+  public function testHydrateObject(ChainHydrator $chainHydrator)
   {
     $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male'];
-    $object = $hydrator->hydrate($array,Person::class);
+    $object = $chainHydrator->hydrate($array,Person::class);
 
     $this->assertInstanceOf(Person::class,$object);
     $this->assertAttributeEquals('John','firstName',$object,'firstName');

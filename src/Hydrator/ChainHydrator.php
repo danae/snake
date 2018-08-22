@@ -3,7 +3,7 @@ namespace Snake\Hydrator;
 
 use Snake\Exception\CannotHydrateException;
 
-class Hydrator implements HydratorInterface
+class ChainHydrator implements HydratorInterface
 {
   // Variables
   private $hydrators;
