@@ -66,7 +66,9 @@ class ObjectHydratorTest extends TestCase
     $objectHydrator->setNameCallbacks(['birthDate' => function($string) {
       return new \DateTime($string);
     }]);
-    $objectHydrator->setNameConverters([]);
+    $objectHydrator->setNameConvertors([]);
+    $objectHydrator->setBefore([]);
+    $objectHydrator->setAfter([]);
 
     $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male', 'birthDate' => '1970-01-01'];
     $object = $objectHydrator->hydrate($array,PersonWithBirthDate::class);
@@ -81,7 +83,9 @@ class ObjectHydratorTest extends TestCase
   public function testNameConverter(ObjectHydrator $objectHydrator)
   {
     $objectHydrator->setNameCallbacks([]);
-    $objectHydrator->setNameConverters(['name' => 'lastName']);
+    $objectHydrator->setNameConvertors(['name' => 'lastName']);
+    $objectHydrator->setBefore([]);
+    $objectHydrator->setAfter([]);
 
     $array = ['name' => 'Doe', 'firstName' => 'John', 'gender' => 'male'];
     $object = $objectHydrator->hydrate($array,Person::class);
@@ -89,5 +93,49 @@ class ObjectHydratorTest extends TestCase
     $this->assertInstanceOf(Person::class,$object);
     $this->assertAttributeEquals('John','firstName',$object,'firstName');
     $this->assertAttributeEquals('Doe','lastName',$object,'lastName');
+  }
+
+  /**
+  * @depends testConstructor
+  */
+  public function testBeforeMiddleware(ObjectHydrator $objectHydrator)
+  {
+    $objectHydrator->setNameCallbacks([]);
+    $objectHydrator->setNameConvertors([]);
+    $objectHydrator->setBefore([function($array) {
+      [$firstName, $lastName] = explode(' ',$array['name'],2);
+      $array['firstName'] = $firstName;
+      $array['lastName'] = $lastName;
+      unset($array['name']);
+      return $array;
+    }]);
+    $objectHydrator->setAfter([]);
+
+    $array = ['name' => 'John Doe', 'gender' => 'male'];
+    $object = $objectHydrator->hydrate($array,Person::class);
+
+    $this->assertInstanceOf(Person::class,$object);
+    $this->assertAttributeEquals('John','firstName',$object,'firstName');
+    $this->assertAttributeEquals('Doe','lastName',$object,'lastName');
+  }
+
+  /**
+  * @depends testConstructor
+  */
+  public function testAfterMiddleware(ObjectHydrator $objectHydrator)
+  {
+    $objectHydrator->setNameCallbacks([]);
+    $objectHydrator->setNameConvertors([]);
+    $objectHydrator->setBefore([]);
+    $objectHydrator->setAfter([function($object) {
+      $object->firstName = 'Jane';
+      return $object;
+    }]);
+
+    $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male'];
+    $object = $objectHydrator->hydrate($array,Person::class);
+
+    $this->assertInstanceOf(Person::class,$object);
+    $this->assertAttributeEquals('Jane','firstName',$object,'firstName');
   }
 }

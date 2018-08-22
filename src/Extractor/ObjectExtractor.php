@@ -1,6 +1,9 @@
 <?php
 namespace Snake\Extractor;
 
+use Snake\Common\NameCallbackTrait;
+use Snake\Common\NameConvertorTrait;
+use Snake\Common\TypeCallbackTrait;
 use Snake\Exception\CannotExtractException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -8,52 +11,55 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectExtractor implements ExtractorInterface
 {
+  use TypeCallbackTrait, NameCallbackTrait, NameConvertorTrait;
+
   // Variables
   private $propertyAccessor;
-  private $typeCallbacks;
-  private $nameCallbacks;
-  private $nameConverters;
+  private $before = [];
+  private $after = [];
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
   {
     $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
-    $this->typeCallbacks = [];
-    $this->nameCallbacks = [];
-    $this->nameConverters = [];
   }
 
-  // Set the type callbacks
-  public function setTypeCallbacks(array $typeCallbacks): self
+  // Set the before middleware
+  public function setBefore(array $before): self
   {
-    foreach ($typeCallbacks as $type => $callback)
-      if (!is_string($type) || !is_callable($callback))
-        throw new \InvalidArgumentException("Type callbacks must be an associative-only array containing callables");
+    foreach ($before as $callback)
+      if (!is_callable($callback))
+        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
 
-    $this->typeCallbacks = $typeCallbacks;
+    $this->before = $before;
     return $this;
   }
 
-  // Set the name callbacks
-  public function setNameCallbacks(array $nameCallbacks): self
+  // Set the after middlafeware
+  public function setAfter(array $after): self
   {
-    foreach ($nameCallbacks as $name => $callback)
-      if (!is_string($name) || !is_callable($callback))
-        throw new \InvalidArgumentException("Name callbacks must be an associative-only array containing callables");
+    foreach ($after as $callback)
+      if (!is_callable($callback))
+        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
 
-    $this->nameCallbacks = $nameCallbacks;
+    $this->after = $after;
     return $this;
   }
 
-  // Set the name converters
-  public function setNameConverters(array $nameConverters): self
+  // Apply the before middleware
+  protected function applyBefore(object $object): object
   {
-    foreach ($nameConverters as $name => $mappedName)
-      if (!is_string($name) || !is_string($mappedName))
-        throw new \InvalidArgumentException("Name converters must be an associative-only array containing strings");
+    foreach ($this->before as $middleware)
+      $object = $middleware($object);
+    return $object;
+  }
 
-    $this->nameConverters = $nameConverters;
-    return $this;
+  // Apply the after middleware
+  protected function applyAfter(array $array): array
+  {
+    foreach ($this->after as $middleware)
+      $array = $middleware($array);
+    return $array;
   }
 
   // Return the properties of an object
@@ -114,6 +120,9 @@ class ObjectExtractor implements ExtractorInterface
   {
     $extractor = $extractor ?? $this;
 
+    // Apply before middleware
+    $object = $this->applyBefore($object);
+
     // Create a new array
     $array = [];
 
@@ -126,23 +135,22 @@ class ObjectExtractor implements ExtractorInterface
 
       // Read the property
       $value = $this->propertyAccessor->getValue($object,$name);
-      $type = is_object($value) ? get_class($value) : gettype($value);
 
-      // Check if there is a type callback for this property
-      if (array_key_exists($type,$this->typeCallbacks))
-        $value = $this->typeCallbacks[$type]($value);
+      // Apply type callbacks
+      $value = $this->applyTypeCallbacks($value);
 
-      // Check if there is a name callback for this property
-      if (array_key_exists($name,$this->nameCallbacks))
-        $value = $this->nameCallbacks[$name]($value);
+      // Apply name callbacks
+      $value = $this->applyNameCallbacks($name,$value);
 
-      // Check if there is a name converter for this property
-      if (array_key_exists($name,$this->nameConverters))
-        $name = $this->nameConverters[$name];
+      // Apply name convertors
+      $name = $this->applyNameConvertors($name);
 
       // Add the property to the array
       $array[$name] = $value;
     }
+
+    // Apply after middleware
+    $array = $this->applyAfter($array);
 
     // Return the array
     return $array;

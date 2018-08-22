@@ -1,6 +1,8 @@
 <?php
 namespace Snake\Hydrator;
 
+use Snake\Common\NameCallbackTrait;
+use Snake\Common\NameConvertorTrait;
 use Snake\Exception\CannotHydrateException;
 use Snake\Exception\PropertyNotWritableException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
@@ -9,19 +11,18 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectHydrator implements HydratorInterface
 {
+  use NameCallbackTrait, NameConvertorTrait;
+
   // Variables
   private $propertyAccessor;
-  private $errorOnNotWritable;
-  private $nameCallbacks;
-  private $nameConverters;
+  private $errorOnNotWritable = true;
+  private $before = [];
+  private $after = [];
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
   {
     $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
-    $this->errorOnNotWritable = true;
-    $this->nameCallbacks = [];
-    $this->nameConverters = [];
   }
 
   // Set if an error is thrown if a property is not writable
@@ -31,44 +32,61 @@ class ObjectHydrator implements HydratorInterface
     return $this;
   }
 
-  // Set the name callbacks
-  public function setNameCallbacks(array $nameCallbacks): self
+  // Set the before middleware
+  public function setBefore(array $before): self
   {
-    foreach ($nameCallbacks as $name => $callback)
-      if (!is_string($name) || !is_callable($callback))
-        throw new \InvalidArgumentException("Name callbacks must be an associative-only array containing callables");
+    foreach ($before as $callback)
+      if (!is_callable($callback))
+        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
 
-    $this->nameCallbacks = $nameCallbacks;
+    $this->before = $before;
     return $this;
   }
 
-  // Set the name converters
-  public function setNameConverters(array $nameConverters): self
+  // Set the after middlafeware
+  public function setAfter(array $after): self
   {
-    foreach ($nameConverters as $name => $mappedName)
-      if (!is_string($name) || !is_string($mappedName))
-        throw new \InvalidArgumentException("Name converters must be an associative-only array containing strings");
+    foreach ($after as $callback)
+      if (!is_callable($callback))
+        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
 
-    $this->nameConverters = $nameConverters;
+    $this->after = $after;
     return $this;
+  }
+
+  // Apply the before middleware
+  protected function applyBefore(array $array): array
+  {
+    foreach ($this->before as $middleware)
+      $array = $middleware($array);
+    return $array;
+  }
+
+  // Apply the after middleware
+  protected function applyAfter(object $object): object
+  {
+    foreach ($this->after as $middleware)
+      $object = $middleware($object);
+    return $object;
   }
 
   // Convert an array to a hydrated object
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
+    // Apply before middleware
+    $array = $this->applyBefore($array);
+
     // Create a new instance of the object
     $object = new $objectClass(...$objectArguments);
 
     // Iterate over the array
     foreach ($array as $name => $value)
     {
-      // Check if there is a name callback for this property
-      if (array_key_exists($name,$this->nameCallbacks))
-        $value = $this->nameCallbacks[$name]($value);
+      // Apply name callbacks
+      $value = $this->applyNameCallbacks($name,$value);
 
-      // Check if there is a name converter for this property
-      if (array_key_exists($name,$this->nameConverters))
-        $name = $this->nameConverters[$name];
+      // Apply name convertors
+      $name = $this->applyNameConvertors($name);
 
       // Check if the property is writable
       if (!$this->propertyAccessor->isWritable($object,$name))
@@ -82,6 +100,9 @@ class ObjectHydrator implements HydratorInterface
       // Write the property
       $this->propertyAccessor->setValue($object,$name,$value);
     }
+
+    // Apply after middleware
+    $object = $this->applyAfter($object);
 
     // Return the object
     return $object;

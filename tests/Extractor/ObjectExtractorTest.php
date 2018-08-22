@@ -43,7 +43,9 @@ class ObjectExtractorTest extends TestCase
       return $dateTime->format('Y-m-d');
     }]);
     $objectExtractor->setNameCallbacks([]);
-    $objectExtractor->setNameConverters([]);
+    $objectExtractor->setNameConvertors([]);
+    $objectExtractor->setBefore([]);
+    $objectExtractor->setAfter([]);
 
     $object = new PersonWithBirthDate();
     $object->firstName = 'John';
@@ -64,7 +66,9 @@ class ObjectExtractorTest extends TestCase
     $objectExtractor->setNameCallbacks(['birthDate' => function($dateTime) {
       return $dateTime->format('Y-m-d');
     }]);
-    $objectExtractor->setNameConverters([]);
+    $objectExtractor->setNameConvertors([]);
+    $objectExtractor->setBefore([]);
+    $objectExtractor->setAfter([]);
 
     $object = new PersonWithBirthDate();
     $object->firstName = 'John';
@@ -83,7 +87,9 @@ class ObjectExtractorTest extends TestCase
   {
     $objectExtractor->setTypeCallbacks([]);
     $objectExtractor->setNameCallbacks([]);
-    $objectExtractor->setNameConverters(['lastName' => 'name']);
+    $objectExtractor->setNameConvertors(['lastName' => 'name']);
+    $objectExtractor->setBefore([]);
+    $objectExtractor->setAfter([]);
 
     $object = new Person();
     $object->firstName = 'John';
@@ -92,5 +98,53 @@ class ObjectExtractorTest extends TestCase
     $array = $objectExtractor->extract($object);
 
     $this->assertEquals('Doe',$array['name'],'name');
+  }
+
+  /**
+  * @depends testConstructor
+  */
+  public function testBeforeMiddleware(ObjectExtractor $objectExtractor)
+  {
+    $objectExtractor->setTypeCallbacks([]);
+    $objectExtractor->setNameCallbacks([]);
+    $objectExtractor->setNameConvertors([]);
+    $objectExtractor->setBefore([function($object) {
+      $object->firstName = 'Jane';
+      return $object;
+    }]);
+    $objectExtractor->setAfter([]);
+
+    $object = new Person();
+    $object->firstName = 'John';
+    $object->lastName = 'Doe';
+    $object->gender = 'male';
+    $array = $objectExtractor->extract($object);
+
+    $this->assertEquals('Jane',$array['firstName'],'firstName');
+  }
+
+  /**
+  * @depends testConstructor
+  */
+  public function testAfterMiddleware(ObjectExtractor $objectExtractor)
+  {
+    $objectExtractor->setTypeCallbacks([]);
+    $objectExtractor->setNameCallbacks([]);
+    $objectExtractor->setNameConvertors([]);
+    $objectExtractor->setBefore([]);
+    $objectExtractor->setAfter([function($array) {
+      $array['name'] = $array['firstName'] . ' ' . $array['lastName'];
+      unset($array['firstName']);
+      unset($array['lastName']);
+      return $array;
+    }]);
+
+    $object = new Person();
+    $object->firstName = 'John';
+    $object->lastName = 'Doe';
+    $object->gender = 'male';
+    $array = $objectExtractor->extract($object);
+
+    $this->assertEquals('John Doe',$array['name'],'name');
   }
 }
