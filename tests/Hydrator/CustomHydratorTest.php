@@ -54,8 +54,8 @@ class CustomHydratorTest extends TestCase
 
     $this->assertAttributeEquals(['prefix' => 'wiki_'],'context',$customHydrator,'context');
 
-    $array = ['name' => 'users'];
-    $object = $customHydrator->hydrate($array,Table::class);
+    $string = 'users';
+    $object = $customHydrator->hydrate($string,Table::class);
 
     $this->assertInstanceOf(Table::class,$object);
     $this->assertAttributeEquals('wiki_users','name',$object,'name');
