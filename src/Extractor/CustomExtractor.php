@@ -5,6 +5,8 @@ use Snake\Exception\CannotExtractException;
 
 class CustomExtractor implements ExtractorInterface
 {
+  use ExtractorMiddlewareTrait;
+
   // Variables
   private $context;
 
@@ -30,7 +32,16 @@ class CustomExtractor implements ExtractorInterface
     if (!is_a($object,CustomExtractInterface::class))
       throw new CannotExtractException(get_class($object),self::class);
 
+    // Apply before middleware
+    $object = $this->applyBefore($object);
+
     // Extract the object
-    return $object->extract($extractor,$this->context);
+    $array = $object->extract($extractor,$this->context);
+
+    // Apply after middleware
+    $array = $this->applyAfter($array);
+
+    // Return the array
+    return $array;
   }
 }

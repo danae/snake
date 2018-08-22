@@ -11,13 +11,11 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectHydrator implements HydratorInterface
 {
-  use NameCallbackTrait, NameConvertorTrait;
+  use NameCallbackTrait, NameConvertorTrait, HydratorMiddlewareTrait;
 
   // Variables
   private $propertyAccessor;
   private $errorOnNotWritable = true;
-  private $before = [];
-  private $after = [];
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
@@ -30,44 +28,6 @@ class ObjectHydrator implements HydratorInterface
   {
     $this->errorOnNotWritable = $errorOnNotWritable;
     return $this;
-  }
-
-  // Set the before middleware
-  public function setBefore(array $before): self
-  {
-    foreach ($before as $callback)
-      if (!is_callable($callback))
-        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
-
-    $this->before = $before;
-    return $this;
-  }
-
-  // Set the after middlafeware
-  public function setAfter(array $after): self
-  {
-    foreach ($after as $callback)
-      if (!is_callable($callback))
-        throw new \InvalidArgumentException("Middleware must be an indexed array of callables");
-
-    $this->after = $after;
-    return $this;
-  }
-
-  // Apply the before middleware
-  protected function applyBefore(array $array): array
-  {
-    foreach ($this->before as $middleware)
-      $array = $middleware($array);
-    return $array;
-  }
-
-  // Apply the after middleware
-  protected function applyAfter(object $object): object
-  {
-    foreach ($this->after as $middleware)
-      $object = $middleware($object);
-    return $object;
   }
 
   // Convert an array to a hydrated object

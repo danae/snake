@@ -5,6 +5,8 @@ use Snake\Exception\CannotHydrateException;
 
 class ChainHydrator implements HydratorInterface
 {
+  use HydratorMiddlewareTrait;
+
   // Variables
   private $hydrators;
 
@@ -22,12 +24,19 @@ class ChainHydrator implements HydratorInterface
   // Convert an array to a hydrated object
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
+    // Apply before middleware
+    $array = $this->applyBefore($array);
+
+    // Create an empty object reference
+    $object = null;
+
     // Iterate over the hydrators, skip if cannot hydrate
     foreach ($this->hydrators as $hydrator)
     {
       try
       {
-        return $hydrator->hydrate($array,$objectClass,...$objectArguments);
+        $object = $hydrator->hydrate($array,$objectClass,...$objectArguments);
+        break;
       }
       catch (CannotHydrateException $ex)
       {
@@ -35,7 +44,14 @@ class ChainHydrator implements HydratorInterface
       }
     }
 
-    // If no hydrator can hydrate the object, then throw it out
-    throw new CannotHydrateException($objectClass,self::class);
+    // Check if the array is hydrated
+    if ($object === null)
+      throw new CannotHydrateException($objectClass,self::class);
+
+    // Apply after middleware
+    $object = $this->applyAfter($object);
+
+    // Return the object
+    return $object;
   }
 }

@@ -5,6 +5,8 @@ use Snake\Exception\CannotExtractException;
 
 class ChainExtractor implements ExtractorInterface
 {
+  use ExtractorMiddlewareTrait;
+
   // Variables
   private $extractors;
 
@@ -24,12 +26,19 @@ class ChainExtractor implements ExtractorInterface
   {
     $extractor = $extractor ?? $this;
 
+    // Apply before middleware
+    $object = $this->applyBefore($object);
+
+    // Create an empty array reference
+    $array = null;
+
     // Iterate over the extractors, skip if cannot extract
     foreach ($this->extractors as $extractor)
     {
       try
       {
-        return $extractor->extract($object,$extractor);
+        $array = $extractor->extract($object,$extractor);
+        break;
       }
       catch (CannotExtractException $ex)
       {
@@ -37,13 +46,14 @@ class ChainExtractor implements ExtractorInterface
       }
     }
 
-    // If no extractor can extract the object, then throw it out
-    throw new CannotExtractException(get_class($object),self::class);
-  }
+    // Check if the array is extracted
+    if ($array == null)
+      throw new CannotExtractException(get_class($object),self::class);
 
-  // Return if this extractor supports extracting a value
-  public function supportsExtraction($value)
-  {
-    return false;
+      // Apply after middleware
+      $array = $this->applyAfter($array);
+
+    // Return the array
+    return $array;
   }
 }

@@ -5,6 +5,8 @@ use Snake\Exception\CannotHydrateException;
 
 class CustomHydrator implements HydratorInterface
 {
+  use HydratorMiddlewareTrait;
+
   // Variables
   private $context;
 
@@ -28,10 +30,19 @@ class CustomHydrator implements HydratorInterface
     if (!array_key_exists(CustomHydrateInterface::class,class_implements($objectClass)))
       throw new CannotHydrateException($objectClass,self::class);
 
+    // Apply before middleware
+    $array = $this->applyBefore($array);
+
     // Create a new instance of the object
     $object = new $objectClass(...$objectArguments);
 
     // Hydrate the object
-    return $object->hydrate($this,$array,$this->context);
+    $object = $object->hydrate($this,$array,$this->context);
+
+    // Apply after middleware
+    $object = $this->applyAfter($object);
+
+    // Return the object
+    return $object;
   }
 }
