@@ -37,11 +37,13 @@ class ObjectExtractorTest extends TestCase
   /**
   * @depends testConstructor
   */
-  public function testTypeConvertingCallback(ObjectExtractor $objectExtractor)
+  public function testTypeCallback(ObjectExtractor $objectExtractor)
   {
-    $objectExtractor->setCallbacks(['birthDate' => function($dateTime) {
+    $objectExtractor->setTypeCallbacks([\DateTime::class => function($dateTime) {
       return $dateTime->format('Y-m-d');
     }]);
+    $objectExtractor->setNameCallbacks([]);
+    $objectExtractor->setNameConverters([]);
 
     $object = new PersonWithBirthDate();
     $object->firstName = 'John';
@@ -56,11 +58,32 @@ class ObjectExtractorTest extends TestCase
   /**
   * @depends testConstructor
   */
-  public function testNameConverterCallback(ObjectExtractor $objectExtractor)
+  public function testNameCallback(ObjectExtractor $objectExtractor)
   {
-    $objectExtractor->setCallbacks(['lastName' => function($name) {
-      return ['name' => $name];
+    $objectExtractor->setTypeCallbacks([]);
+    $objectExtractor->setNameCallbacks(['birthDate' => function($dateTime) {
+      return $dateTime->format('Y-m-d');
     }]);
+    $objectExtractor->setNameConverters([]);
+
+    $object = new PersonWithBirthDate();
+    $object->firstName = 'John';
+    $object->lastName = 'Doe';
+    $object->gender = 'male';
+    $object->birthDate = new \DateTime('1970-01-01');
+    $array = $objectExtractor->extract($object);
+
+    $this->assertEquals('1970-01-01',$array['birthDate'],'birthDate');
+  }
+
+  /**
+  * @depends testConstructor
+  */
+  public function testNameConverter(ObjectExtractor $objectExtractor)
+  {
+    $objectExtractor->setTypeCallbacks([]);
+    $objectExtractor->setNameCallbacks([]);
+    $objectExtractor->setNameConverters(['lastName' => 'name']);
 
     $object = new Person();
     $object->firstName = 'John';
@@ -69,23 +92,5 @@ class ObjectExtractorTest extends TestCase
     $array = $objectExtractor->extract($object);
 
     $this->assertEquals('Doe',$array['name'],'name');
-  }
-
-  /**
-  * @depends testConstructor
-  */
-  public function testMultiplePropertiesCallback(ObjectExtractor $objectExtractor)
-  {
-    $objectExtractor->setCallbacks(['firstName' => function($firstName) {
-      return ['firstName' => $firstName, 'initial' => substr($firstName,0,1)];
-    }]);
-
-    $object = new Person();
-    $object->firstName = 'John';
-    $object->lastName = 'Doe';
-    $object->gender = 'male';
-    $array = $objectExtractor->extract($object);
-
-    $this->assertEquals('J',$array['initial'],'initial');
   }
 }

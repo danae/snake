@@ -2,7 +2,6 @@
 namespace Snake\Extractor;
 
 use Snake\Exception\CannotExtractException;
-use Snake\Exception\PropertyNotReadableException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 use Symfony\Component\PropertyAccess\Exception\AccessException;
@@ -11,28 +10,49 @@ class ObjectExtractor implements ExtractorInterface
 {
   // Variables
   private $propertyAccessor;
-  private $errorOnNotReadable;
-  private $callbacks;
+  private $typeCallbacks;
+  private $nameCallbacks;
+  private $nameConverters;
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
   {
     $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
-    $this->errorOnNotReadable = true;
-    $this->callbacks = [];
+    $this->typeCallbacks = [];
+    $this->nameCallbacks = [];
+    $this->nameConverters = [];
   }
 
-  // Set if an error is thrown if a property is not readable
-  public function setErrorOnNotReadable(bool $errorOnNotReadable): self
+  // Set the type callbacks
+  public function setTypeCallbacks(array $typeCallbacks): self
   {
-    $this->errorOnNotReadable = $errorOnNotReadable;
+    foreach ($typeCallbacks as $type => $callback)
+      if (!is_string($type) || !is_callable($callback))
+        throw new \InvalidArgumentException("Type callbacks must be an associative-only array containing callables");
+
+    $this->typeCallbacks = $typeCallbacks;
     return $this;
   }
 
-  // Set the callbacks
-  public function setCallbacks(array $callbacks): self
+  // Set the name callbacks
+  public function setNameCallbacks(array $nameCallbacks): self
   {
-    $this->callbacks = $callbacks;
+    foreach ($nameCallbacks as $name => $callback)
+      if (!is_string($name) || !is_callable($callback))
+        throw new \InvalidArgumentException("Name callbacks must be an associative-only array containing callables");
+
+    $this->nameCallbacks = $nameCallbacks;
+    return $this;
+  }
+
+  // Set the name converters
+  public function setNameConverters(array $nameConverters): self
+  {
+    foreach ($nameConverters as $name => $mappedName)
+      if (!is_string($name) || !is_string($mappedName))
+        throw new \InvalidArgumentException("Name converters must be an associative-only array containing strings");
+
+    $this->nameConverters = $nameConverters;
     return $this;
   }
 
@@ -89,50 +109,42 @@ class ObjectExtractor implements ExtractorInterface
     return array_keys($properties);
   }
 
-  // Convert an object to a PHP value
-  public function extract(object $object)
+  // Convert an object to an extracted array
+  public function extract(object $object, ExtractorInterface $extractor = null): array
   {
+    $extractor = $extractor ?? $this;
+
     // Create a new array
     $array = [];
-    foreach ($this->getProperties($object) as $property)
+
+    // Iterate over the available properties
+    foreach ($this->getProperties($object) as $name)
     {
+      // Check if the property is readable
+      if (!$this->propertyAccessor->isReadable($object,$name))
+        continue;
+
       // Read the property
-      if ($this->propertyAccessor->isReadable($object,$property))
-        $array[$property] = $this->propertyAccessor->getValue($object,$property);
-      else
-      {
-        if ($this->errorOnNotReadable)
-          throw new PropertyNotReadableException(get_class($object),$key);
-        else
-          continue;
-      }
+      $value = $this->propertyAccessor->getValue($object,$name);
+      $type = is_object($value) ? get_class($value) : gettype($value);
+
+      // Check if there is a type callback for this property
+      if (array_key_exists($type,$this->typeCallbacks))
+        $value = $this->typeCallbacks[$type]($value);
+
+      // Check if there is a name callback for this property
+      if (array_key_exists($name,$this->nameCallbacks))
+        $value = $this->nameCallbacks[$name]($value);
+
+      // Check if there is a name converter for this property
+      if (array_key_exists($name,$this->nameConverters))
+        $name = $this->nameConverters[$name];
+
+      // Add the property to the array
+      $array[$name] = $value;
     }
 
-    // Iterate over the array
-    $realArray = [];
-    foreach ($array as $key => $value)
-    {
-      // Check if there is a callback for this key
-      if (array_key_exists($key,$this->callbacks))
-      {
-        // Execute the callbacks and store its result in an array
-        $values = $this->callbacks[$key]($value);
-
-        // If values is no array, then convert it to an array
-        if (!is_array($values))
-          $values = [$key => $values];
-      }
-      else
-      {
-        // Otherwise wrap the key and value in an array
-        $values = [$key => $value];
-      }
-
-      // Add the values to the real array
-      $realArray += $values;
-    }
-
-    // Return the real array
-    return $realArray;
+    // Return the array
+    return $array;
   }
 }

@@ -19,15 +19,17 @@ class ChainExtractor implements ExtractorInterface
     $this->extractors = $extractors;
   }
 
-  // Convert an object to a PHP value
-  public function extract(object $object)
+  // Convert an object to an extracted array
+  public function extract(object $object, ExtractorInterface $extractor = null): array
   {
+    $extractor = $extractor ?? $this;
+
     // Iterate over the extractors, skip if cannot extract
     foreach ($this->extractors as $extractor)
     {
       try
       {
-        return $extractor->extract($object);
+        return $extractor->extract($object,$extractor);
       }
       catch (CannotExtractException $ex)
       {
@@ -36,6 +38,12 @@ class ChainExtractor implements ExtractorInterface
     }
 
     // If no extractor can extract the object, then throw it out
-    throw new CannotExtractException($objectClass,self::class);
+    throw new CannotExtractException(get_class($object),self::class);
+  }
+
+  // Return if this extractor supports extracting a value
+  public function supportsExtraction($value)
+  {
+    return false;
   }
 }

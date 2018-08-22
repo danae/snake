@@ -3,6 +3,6 @@ namespace Snake\Extractor;
 
 interface ExtractorInterface
 {
-  // Convert an object to a PHP value
-  public function extract(object $object);
+  // Convert an object to an extracted array
+  public function extract(object $object, ExtractorInterface $extractor = null): array;
 }

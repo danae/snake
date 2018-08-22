@@ -12,14 +12,16 @@ class ObjectHydrator implements HydratorInterface
   // Variables
   private $propertyAccessor;
   private $errorOnNotWritable;
-  private $callbacks;
+  private $nameCallbacks;
+  private $nameConverters;
 
   // Constructor
   public function __construct(PropertyAccessorInterface $propertyAccessor = null)
   {
     $this->propertyAccessor = $propertyAccessor ?? PropertyAccess::createPropertyAccessor();
     $this->errorOnNotWritable = true;
-    $this->callbacks = [];
+    $this->nameCallbacks = [];
+    $this->nameConverters = [];
   }
 
   // Set if an error is thrown if a property is not writable
@@ -29,55 +31,56 @@ class ObjectHydrator implements HydratorInterface
     return $this;
   }
 
-  // Set the callbacks
-  public function setCallbacks(array $callbacks): self
+  // Set the name callbacks
+  public function setNameCallbacks(array $nameCallbacks): self
   {
-    $this->callbacks = $callbacks;
+    foreach ($nameCallbacks as $name => $callback)
+      if (!is_string($name) || !is_callable($callback))
+        throw new \InvalidArgumentException("Name callbacks must be an associative-only array containing callables");
+
+    $this->nameCallbacks = $nameCallbacks;
     return $this;
   }
 
-  // Convert a PHP value to an object
-  public function hydrate($data, string $objectClass, array ...$objectArguments): object
+  // Set the name converters
+  public function setNameConverters(array $nameConverters): self
   {
-    // Check if the data is an array
-    if (!is_array($data))
-      throw new CannotHydrateException($objectClass,self::class);
+    foreach ($nameConverters as $name => $mappedName)
+      if (!is_string($name) || !is_string($mappedName))
+        throw new \InvalidArgumentException("Name converters must be an associative-only array containing strings");
 
+    $this->nameConverters = $nameConverters;
+    return $this;
+  }
+
+  // Convert an array to a hydrated object
+  public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
+  {
     // Create a new instance of the object
     $object = new $objectClass(...$objectArguments);
 
     // Iterate over the array
-    foreach ($data as $key => $value)
+    foreach ($array as $name => $value)
     {
-      // Check if there is a callback for this key
-      if (array_key_exists($key,$this->callbacks))
-      {
-        // Execute the callbacks and store its result in an array
-        $properties = $this->callbacks[$key]($value);
+      // Check if there is a name callback for this property
+      if (array_key_exists($name,$this->nameCallbacks))
+        $value = $this->nameCallbacks[$name]($value);
 
-        // If properties is no array, then convert it to an array
-        if (!is_array($properties))
-          $properties = [$key => $properties];
-      }
-      else
-      {
-        // Otherwise wrap the key and value in an array
-        $properties = [$key => $value];
-      }
+      // Check if there is a name converter for this property
+      if (array_key_exists($name,$this->nameConverters))
+        $name = $this->nameConverters[$name];
 
-      // Set the properties
-      foreach ($properties as $property => $value)
+      // Check if the property is writable
+      if (!$this->propertyAccessor->isWritable($object,$name))
       {
-        if ($this->propertyAccessor->isWritable($object,$property))
-          $this->propertyAccessor->setValue($object,$property,$value);
+        if ($this->errorOnNotWritable)
+          throw new PropertyNotWritableException(get_class($object),$name);
         else
-        {
-          if ($this->errorOnNotWritable)
-            throw new PropertyNotWritableException(get_class($object),$property);
-          else
-            continue;
-        }
+          continue;
       }
+
+      // Write the property
+      $this->propertyAccessor->setValue($object,$name,$value);
     }
 
     // Return the object

@@ -21,8 +21,8 @@ class CustomHydrator implements HydratorInterface
     return $this;
   }
 
-  // Convert a PHP value to an object
-  public function hydrate($data, string $objectClass, array ...$objectArguments): object
+  // Convert an array to a hydrated object
+  public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
     // Check if the class can be custom hydrated
     if (!array_key_exists(CustomHydrateInterface::class,class_implements($objectClass)))
@@ -32,6 +32,6 @@ class CustomHydrator implements HydratorInterface
     $object = new $objectClass(...$objectArguments);
 
     // Hydrate the object
-    return $object->hydrate($this,$data,$this->context);
+    return $object->hydrate($this,$array,$this->context);
   }
 }

@@ -62,8 +62,8 @@ class CustomExtractorTest extends TestCase
 
     $object = new Table();
     $object->name = 'wiki_users';
-    $string = $customExtractor->extract($object);
+    $array = $customExtractor->extract($object);
 
-    $this->assertEquals('users',$string,'string');
+    $this->assertEquals('users',$array['name'],'string');
   }
 }

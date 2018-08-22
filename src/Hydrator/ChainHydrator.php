@@ -19,15 +19,15 @@ class ChainHydrator implements HydratorInterface
     $this->hydrators = $hydrators;
   }
 
-  // Convert a PHP value to an object
-  public function hydrate($data, string $objectClass, array ...$objectArguments): object
+  // Convert an array to a hydrated object
+  public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
     // Iterate over the hydrators, skip if cannot hydrate
     foreach ($this->hydrators as $hydrator)
     {
       try
       {
-        return $hydrator->hydrate($data,$objectClass,...$objectArguments);
+        return $hydrator->hydrate($array,$objectClass,...$objectArguments);
       }
       catch (CannotHydrateException $ex)
       {

@@ -12,12 +12,14 @@ class Table implements CustomExtractInterface, CustomHydrateInterface
 
   public function extract(ExtractorInterface $extractor, array $context)
   {
-    return strpos($this->name,$context['prefix']) === 0 ? substr($this->name,strlen($context['prefix'])) : $this->name;
+    return [
+      'name' => strpos($this->name,$context['prefix']) === 0 ? substr($this->name,strlen($context['prefix'])) : $this->name
+    ];
   }
 
-  public function hydrate(HydratorInterface $hydrator, $data, array $context): object
+  public function hydrate(HydratorInterface $hydrator, array $array, array $context): object
   {
-    $this->name = $context['prefix'] . $data;
+    $this->name = $context['prefix'] . $array['name'];
     return $this;
   }
 }

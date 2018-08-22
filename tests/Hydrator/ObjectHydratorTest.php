@@ -61,11 +61,12 @@ class ObjectHydratorTest extends TestCase
   /**
   * @depends testConstructor
   */
-  public function testTypeConvertingCallback(ObjectHydrator $objectHydrator)
+  public function testNameCallback(ObjectHydrator $objectHydrator)
   {
-    $objectHydrator->setCallbacks(['birthDate' => function($string) {
+    $objectHydrator->setNameCallbacks(['birthDate' => function($string) {
       return new \DateTime($string);
     }]);
+    $objectHydrator->setNameConverters([]);
 
     $array = ['firstName' => 'John', 'lastName' => 'Doe', 'gender' => 'male', 'birthDate' => '1970-01-01'];
     $object = $objectHydrator->hydrate($array,PersonWithBirthDate::class);
@@ -77,31 +78,12 @@ class ObjectHydratorTest extends TestCase
   /**
   * @depends testConstructor
   */
-  public function testNameConverterCallback(ObjectHydrator $objectHydrator)
+  public function testNameConverter(ObjectHydrator $objectHydrator)
   {
-    $objectHydrator->setCallbacks(['name' => function($name) {
-      return ['lastName' => $name];
-    }]);
+    $objectHydrator->setNameCallbacks([]);
+    $objectHydrator->setNameConverters(['name' => 'lastName']);
 
     $array = ['name' => 'Doe', 'firstName' => 'John', 'gender' => 'male'];
-    $object = $objectHydrator->hydrate($array,Person::class);
-
-    $this->assertInstanceOf(Person::class,$object);
-    $this->assertAttributeEquals('John','firstName',$object,'firstName');
-    $this->assertAttributeEquals('Doe','lastName',$object,'lastName');
-  }
-
-  /**
-  * @depends testConstructor
-  */
-  public function testMultiplePropertiesCallback(ObjectHydrator $objectHydrator)
-  {
-    $objectHydrator->setCallbacks(['name' => function($name) {
-      [$firstName, $lastName] = explode(' ',$name,2);
-      return ['firstName' => $firstName, 'lastName' => $lastName];
-    }]);
-
-    $array = ['name' => 'John Doe', 'gender' => 'male'];
     $object = $objectHydrator->hydrate($array,Person::class);
 
     $this->assertInstanceOf(Person::class,$object);

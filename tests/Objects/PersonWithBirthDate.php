@@ -10,7 +10,7 @@ class PersonWithBirthDate extends Person implements CustomExtractInterface, Cust
 {
   public $birthDate;
 
-  public function extract(ExtractorInterface $extractor, array $context)
+  public function extract(ExtractorInterface $extractor, array $context): array
   {
     return [
       'firstName' => $this->firstName,
@@ -20,12 +20,12 @@ class PersonWithBirthDate extends Person implements CustomExtractInterface, Cust
     ];
   }
 
-  public function hydrate(HydratorInterface $hydrator, $data, array $context): object
+  public function hydrate(HydratorInterface $hydrator, array $array, array $context): object
   {
-    $this->firstName = $data['firstName'];
-    $this->lastName = $data['lastName'];
-    $this->gender = $data['gender'];
-    $this->birthDate = new \DateTime($data['birthDate']);
+    $this->firstName = $array['firstName'];
+    $this->lastName = $array['lastName'];
+    $this->gender = $array['gender'];
+    $this->birthDate = new \DateTime($array['birthDate']);
     return $this;
   }
 }

@@ -3,6 +3,6 @@ namespace Snake\Hydrator;
 
 interface HydratorInterface
 {
-  // Convert a PHP value to an object
-  public function hydrate($data, string $objectClass, array ...$objectArguents): object;
+  // Convert an array to a hydrated object
+  public function hydrate(array $array, string $objectClass, array ...$objectArguents): object;
 }

@@ -4,27 +4,27 @@ namespace Snake\Exception;
 class CannotExtractException extends \RuntimeException
 {
   // Variables
-  private $className;
-  private $extractorClassName;
+  private $type;
+  private $extractorClass;
 
   // Constructor
-  public function __construct(string $className, string $extractorClassName)
+  public function __construct(string $type, string $extractorClass)
   {
-    parent::__construct("Object of type '{$className}' cannot be extracted by extractor of type '{$extractorClassName}'");
+    parent::__construct("{$type} cannot be extracted by extractor of type '{$extractorClass}'");
 
-    $this->className = $className;
-    $this->extractorClassName = $extractorClassName;
+    $this->type = $type;
+    $this->extractorClass = $extractorClass;
   }
 
-  // Return the class name
-  public function getClassName()
+  // Return the type of the value that can't be extracted
+  public function getType()
   {
-    return $this->className;
+    return $this->type;
   }
 
-  // Return the extractor class name
-  public function getExtractorClassName()
+  // Return the extractor class
+  public function getExtractorClass()
   {
-    return $this->extractorClassName;
+    return $this->extractorClass;
   }
 }
