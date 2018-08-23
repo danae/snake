@@ -18,10 +18,10 @@ trait NameCallbackTrait
   }
 
   // Apply the name callbacks
-  private function applyNameCallbacks($name, $value)
+  private function applyNameCallbacks($name, $value, ...$args)
   {
     if (array_key_exists($name,$this->nameCallbacks))
-      $value = $this->nameCallbacks[$name]($value);
+      $value = $this->nameCallbacks[$name]($value,...$args);
     return $value;
   }
 }

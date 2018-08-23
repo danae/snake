@@ -1,6 +1,7 @@
 <?php
 namespace Snake\Hydrator;
 
+use Snake\Common\ContextTrait;
 use Snake\Common\NameCallbackTrait;
 use Snake\Common\NameConvertorTrait;
 use Snake\Exception\CannotHydrateException;
@@ -11,7 +12,7 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectHydrator implements HydratorInterface
 {
-  use NameCallbackTrait, NameConvertorTrait, HydratorMiddlewareTrait;
+  use ContextTrait, NameCallbackTrait, NameConvertorTrait, HydratorMiddlewareTrait;
 
   // Variables
   private $propertyAccessor;
@@ -34,7 +35,7 @@ class ObjectHydrator implements HydratorInterface
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
     // Apply before middleware
-    $array = $this->applyBefore($array);
+    $array = $this->applyBefore($array,$this->context);
 
     // Create a new instance of the object
     $object = new $objectClass(...$objectArguments);
@@ -43,7 +44,7 @@ class ObjectHydrator implements HydratorInterface
     foreach ($array as $name => $value)
     {
       // Apply name callbacks
-      $value = $this->applyNameCallbacks($name,$value);
+      $value = $this->applyNameCallbacks($name,$value,$this->context);
 
       // Apply name convertors
       $name = $this->applyNameConvertors($name);
@@ -62,7 +63,7 @@ class ObjectHydrator implements HydratorInterface
     }
 
     // Apply after middleware
-    $object = $this->applyAfter($object);
+    $object = $this->applyAfter($object,$this->context);
 
     // Return the object
     return $object;

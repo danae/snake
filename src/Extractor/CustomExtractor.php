@@ -18,13 +18,13 @@ class CustomExtractor implements ExtractorInterface
       throw new CannotExtractException(get_class($object),self::class);
 
     // Apply before middleware
-    $object = $this->applyBefore($object);
+    $object = $this->applyBefore($object,$this->context);
 
     // Extract the object
     $array = $object->extract($extractor,$this->context);
 
     // Apply after middleware
-    $array = $this->applyAfter($array);
+    $array = $this->applyAfter($array,$this->context);
 
     // Return the array
     return $array;

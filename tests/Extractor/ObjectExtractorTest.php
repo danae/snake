@@ -83,6 +83,30 @@ class ObjectExtractorTest extends TestCase
   /**
   * @depends testConstructor
   */
+  public function testNameCallbackWithContext(ObjectExtractor $objectExtractor)
+  {
+    $objectExtractor->setContext(['format' => 'd-m-Y']);
+    $objectExtractor->setTypeCallbacks([]);
+    $objectExtractor->setNameCallbacks(['birthDate' => function($dateTime, $context) {
+      return $dateTime->format($context['format']);
+    }]);
+    $objectExtractor->setNameConvertors([]);
+    $objectExtractor->setBefore([]);
+    $objectExtractor->setAfter([]);
+
+    $object = new PersonWithBirthDate();
+    $object->firstName = 'John';
+    $object->lastName = 'Doe';
+    $object->gender = 'male';
+    $object->birthDate = new \DateTime('1970-01-01');
+    $array = $objectExtractor->extract($object);
+
+    $this->assertEquals('01-01-1970',$array['birthDate'],'birthDate');
+  }
+
+  /**
+  * @depends testConstructor
+  */
   public function testNameConverter(ObjectExtractor $objectExtractor)
   {
     $objectExtractor->setTypeCallbacks([]);

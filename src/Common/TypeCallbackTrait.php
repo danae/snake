@@ -18,11 +18,11 @@ trait TypeCallbackTrait
   }
 
   // Apply the type callbacks
-  private function applyTypeCallbacks($value)
+  private function applyTypeCallbacks($value, ...$args)
   {
     $type = is_object($value) ? get_class($value) : gettype($value);
     if (array_key_exists($type,$this->typeCallbacks))
-      $value = $this->typeCallbacks[$type]($value);
+      $value = $this->typeCallbacks[$type]($value,...$args);
     return $value;
   }
 }

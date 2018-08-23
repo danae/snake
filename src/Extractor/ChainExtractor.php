@@ -1,11 +1,12 @@
 <?php
 namespace Snake\Extractor;
 
+use Snake\Common\ContextTrait;
 use Snake\Exception\CannotExtractException;
 
 class ChainExtractor implements ExtractorInterface
 {
-  use ExtractorMiddlewareTrait;
+  use ContextTrait, ExtractorMiddlewareTrait;
 
   // Variables
   private $extractors;
@@ -27,7 +28,7 @@ class ChainExtractor implements ExtractorInterface
     $extractor = $extractor ?? $this;
 
     // Apply before middleware
-    $object = $this->applyBefore($object);
+    $object = $this->applyBefore($object,$this->context);
 
     // Create an empty array reference
     $array = null;
@@ -51,7 +52,7 @@ class ChainExtractor implements ExtractorInterface
       throw new CannotExtractException(get_class($object),self::class);
 
       // Apply after middleware
-      $array = $this->applyAfter($array);
+      $array = $this->applyAfter($array,$this->context);
 
     // Return the array
     return $array;

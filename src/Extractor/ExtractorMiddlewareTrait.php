@@ -30,18 +30,18 @@ trait ExtractorMiddlewareTrait
   }
 
   // Apply the before middleware
-  protected function applyBefore(object $object): object
+  protected function applyBefore(object $object, ...$args): object
   {
     foreach ($this->before as $middleware)
-      $object = $middleware($object);
+      $object = $middleware($object,...$args);
     return $object;
   }
 
   // Apply the after middleware
-  protected function applyAfter(array $array): array
+  protected function applyAfter(array $array, ...$args): array
   {
     foreach ($this->after as $middleware)
-      $array = $middleware($array);
+      $array = $middleware($array,...$args);
     return $array;
   }
 }

@@ -30,18 +30,18 @@ trait HydratorMiddlewareTrait
   }
 
   // Apply the before middleware
-  protected function applyBefore(array $array): array
+  protected function applyBefore(array $array, ...$args): array
   {
     foreach ($this->before as $middleware)
-      $array = $middleware($array);
+      $array = $middleware($array,...$args);
     return $array;
   }
 
   // Apply the after middleware
-  protected function applyAfter(object $object): object
+  protected function applyAfter(object $object, ...$args): object
   {
     foreach ($this->after as $middleware)
-      $object = $middleware($object);
+      $object = $middleware($object,...$args);
     return $object;
   }
 }

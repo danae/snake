@@ -16,7 +16,7 @@ class CustomHydrator implements HydratorInterface
       throw new CannotHydrateException($objectClass,self::class);
 
     // Apply before middleware
-    $array = $this->applyBefore($array);
+    $array = $this->applyBefore($array,$this->context);
 
     // Create a new instance of the object
     $object = new $objectClass(...$objectArguments);
@@ -25,7 +25,7 @@ class CustomHydrator implements HydratorInterface
     $object = $object->hydrate($this,$array,$this->context);
 
     // Apply after middleware
-    $object = $this->applyAfter($object);
+    $object = $this->applyAfter($object,$this->context);
 
     // Return the object
     return $object;

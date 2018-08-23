@@ -1,11 +1,12 @@
 <?php
 namespace Snake\Hydrator;
 
+use Snake\Common\ContextTrait;
 use Snake\Exception\CannotHydrateException;
 
 class ChainHydrator implements HydratorInterface
 {
-  use HydratorMiddlewareTrait;
+  use ContextTrait, HydratorMiddlewareTrait;
 
   // Variables
   private $hydrators;
@@ -25,7 +26,7 @@ class ChainHydrator implements HydratorInterface
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
     // Apply before middleware
-    $array = $this->applyBefore($array);
+    $array = $this->applyBefore($array,$this->context);
 
     // Create an empty object reference
     $object = null;
@@ -49,7 +50,7 @@ class ChainHydrator implements HydratorInterface
       throw new CannotHydrateException($objectClass,self::class);
 
     // Apply after middleware
-    $object = $this->applyAfter($object);
+    $object = $this->applyAfter($object,$this->context);
 
     // Return the object
     return $object;

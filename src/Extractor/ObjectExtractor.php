@@ -1,6 +1,7 @@
 <?php
 namespace Snake\Extractor;
 
+use Snake\Common\ContextTrait;
 use Snake\Common\NameCallbackTrait;
 use Snake\Common\NameConvertorTrait;
 use Snake\Common\TypeCallbackTrait;
@@ -11,7 +12,7 @@ use Symfony\Component\PropertyAccess\Exception\AccessException;
 
 class ObjectExtractor implements ExtractorInterface
 {
-  use TypeCallbackTrait, NameCallbackTrait, NameConvertorTrait, ExtractorMiddlewareTrait;
+  use ContextTrait, TypeCallbackTrait, NameCallbackTrait, NameConvertorTrait, ExtractorMiddlewareTrait;
 
   // Variables
   private $propertyAccessor;
@@ -81,7 +82,7 @@ class ObjectExtractor implements ExtractorInterface
     $extractor = $extractor ?? $this;
 
     // Apply before middleware
-    $object = $this->applyBefore($object);
+    $object = $this->applyBefore($object,$this->context);
 
     // Create a new array
     $array = [];
@@ -97,10 +98,10 @@ class ObjectExtractor implements ExtractorInterface
       $value = $this->propertyAccessor->getValue($object,$name);
 
       // Apply type callbacks
-      $value = $this->applyTypeCallbacks($value);
+      $value = $this->applyTypeCallbacks($value,$this->context);
 
       // Apply name callbacks
-      $value = $this->applyNameCallbacks($name,$value);
+      $value = $this->applyNameCallbacks($name,$value,$this->context);
 
       // Apply name convertors
       $name = $this->applyNameConvertors($name);
@@ -110,7 +111,7 @@ class ObjectExtractor implements ExtractorInterface
     }
 
     // Apply after middleware
-    $array = $this->applyAfter($array);
+    $array = $this->applyAfter($array,$this->context);
 
     // Return the array
     return $array;
