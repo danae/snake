@@ -4,7 +4,7 @@ namespace Snake\Common;
 trait NameConvertorTrait
 {
   // Variables
-  private $nameConvertors = [];
+  protected $nameConvertors = [];
 
   // Set the name convertors
   public function setNameConvertors(array $nameConvertors): self

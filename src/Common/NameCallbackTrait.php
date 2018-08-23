@@ -4,7 +4,7 @@ namespace Snake\Common;
 trait NameCallbackTrait
 {
   // Variables
-  private $nameCallbacks = [];
+  protected $nameCallbacks = [];
 
   // Set the name callbacks
   public function setNameCallbacks(array $nameCallbacks): self

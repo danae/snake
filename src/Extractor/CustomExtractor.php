@@ -1,27 +1,12 @@
 <?php
 namespace Snake\Extractor;
 
+use Snake\Common\ContextTrait;
 use Snake\Exception\CannotExtractException;
 
 class CustomExtractor implements ExtractorInterface
 {
-  use ExtractorMiddlewareTrait;
-
-  // Variables
-  private $context;
-
-  // Constructor
-  public function __construct()
-  {
-    $this->context = [];
-  }
-
-  // Set the context
-  public function setContext(array $context): self
-  {
-    $this->context = $context;
-    return $this;
-  }
+  use ContextTrait, ExtractorMiddlewareTrait;
 
   // Convert an object to an extracted array
   public function extract(object $object, ExtractorInterface $extractor = null): array

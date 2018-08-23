@@ -1,27 +1,12 @@
 <?php
 namespace Snake\Hydrator;
 
+use Snake\Common\ContextTrait;
 use Snake\Exception\CannotHydrateException;
 
 class CustomHydrator implements HydratorInterface
 {
-  use HydratorMiddlewareTrait;
-
-  // Variables
-  private $context;
-
-  // Constructor
-  public function __construct()
-  {
-    $this->context = [];
-  }
-
-  // Set the context
-  public function setContext(array $context): self
-  {
-    $this->context = $context;
-    return $this;
-  }
+  use ContextTrait, HydratorMiddlewareTrait;
 
   // Convert an array to a hydrated object
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
