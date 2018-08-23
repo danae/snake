@@ -22,6 +22,15 @@ class ChainExtractor implements ExtractorInterface
     $this->extractors = $extractors;
   }
 
+  // Set the context for all child extractors
+  public function setContext(array $context): self
+  {
+    foreach ($this->extractors as $extractor)
+      $extractor->setContext($context);
+
+    return parent::setContext($context);
+  }
+
   // Convert an object to an extracted array
   public function extract(object $object, ExtractorInterface $extractor = null): array
   {

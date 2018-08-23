@@ -22,6 +22,15 @@ class ChainHydrator implements HydratorInterface
     $this->hydrators = $hydrators;
   }
 
+  // Set the context for all child hydrators
+  public function setContext(array $context): self
+  {
+    foreach ($this->hydrators as $hydrator)
+      $hydrator->setContext($context);
+      
+    return parent::setContext($context);
+  }
+
   // Convert an array to a hydrated object
   public function hydrate(array $array, string $objectClass, array ...$objectArguments): object
   {
